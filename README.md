@@ -39,3 +39,15 @@ npm run api
 ```bash
 npm run build
 ```
+
+## Screenshots
+
+![Home Page](docs/screenshots/home.png)
+
+![Products Page](docs/screenshots/products.png)
+
+![Product Details Page](docs/screenshots/product-details.png)
+
+![Add Product Page](docs/screenshots/add-product.png)
+
+![Contact Page](docs/screenshots/contact.png)
