@@ -1,0 +1,21 @@
+{
+  "products": [
+    {
+      "title": "iPhone 17 Pro Max 256 GB Silver 5G (eSim only) With FaceTime - International Version",
+      "price": 1000,
+      "category": "beauty",
+      "description": "The innovative design for iPhone 17 Pro Max delivers exceptional durability, breakthrough battery life and unlocks the extraordinary power of the A19 Pro chip. The 48MP Pro Fusion camera system has the longest iPhone Telephoto ever with 8x zoom, and a Center Stage front camera for smarter group selfies and Dual Capture video. Ceramic Shield 2 on the front for 3x better scratch resistance, and a forged aluminium unibody that dissipates heat. Helpful Apple Intelligence tools like Clean Up and more.",
+      "thumbnail": "https://www.macworld.com/wp-content/uploads/2026/03/macwelt.jpg?resize=1200%2C675&quality=50&strip=all",
+      "id": "tPXgPNaGhvE"
+    },
+    {
+      "title": "Y21d Dual SIM Coral Red 6GB RAM 128GB 4G- Middle East Version",
+      "price": 250,
+      "category": "beauty",
+      "description": "Vibrant light combines style and function with dynamic color changes and smart notifications.",
+      "thumbnail": "https://f.nooncdn.com/p/pnsku/N70269123V/45/_/1765813783/2273ac73-3791-4d87-99fd-f28ba2582e22.jpg?width=800",
+      "id": "wPHDBcTZ-_s"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
