@@ -9,15 +9,62 @@ const ProductsComponent = ({ products }) => {
   const [items, setItems] = useState(products || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [buyFeedback, setBuyFeedback] = useState('');
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (!res.ok) {
+        return;
+      }
+
+      const data = await res.json();
+      setItems(Array.isArray(data) ? data : []);
+    } catch {
+      setItems(products || []);
+    }
+  };
 
   useEffect(() => {
     setItems(products || []);
   }, [products]);
 
+  useEffect(() => {
+    fetchProducts();
+
+    const refreshInterval = setInterval(
+      () => {
+        fetchProducts();
+      },
+      5 * 60 * 1000,
+    );
+
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  useEffect(() => {
+    const fetchTotals = async () => {
+      try {
+        const res = await fetch('/api/purchases/total');
+        if (!res.ok) {
+          return;
+        }
+
+        const data = await res.json();
+        setTotalAmount(Number(data.totalAmount || 0));
+      } catch {
+        setTotalAmount(0);
+      }
+    };
+
+    fetchTotals();
+  }, []);
+
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        const res = await fetch(`http://localhost:4000/products/${id}`, {
+        const res = await fetch(`/api/products/${id}`, {
           method: 'DELETE',
         });
         if (res.ok) {
@@ -29,6 +76,51 @@ const ProductsComponent = ({ products }) => {
         console.error('Delete failed:', error);
         setItems((prev) => prev.filter((item) => item.id !== id));
       }
+    }
+  };
+
+  const handleBuy = async (id) => {
+    setBuyFeedback('');
+
+    try {
+      const res = await fetch(`/api/products/${id}/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: 1 }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Could not buy product.');
+      }
+
+      const data = await res.json();
+      setTotalAmount(Number(data.totalAmount || 0));
+      setBuyFeedback(
+        `Purchase added. Total revenue: $${Number(data.totalAmount || 0).toFixed(2)}`,
+      );
+    } catch {
+      setBuyFeedback('Purchase failed. Please try again.');
+    }
+  };
+
+  const handleClearPurchased = async () => {
+    if (!window.confirm('Empty all purchased records?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/purchases/total', {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error('Could not clear purchased records.');
+      }
+
+      setTotalAmount(0);
+      setBuyFeedback('Purchased records emptied.');
+    } catch {
+      setBuyFeedback('Could not empty purchased records.');
     }
   };
 
@@ -103,6 +195,29 @@ const ProductsComponent = ({ products }) => {
             </button>
           ))}
         </div>
+
+        <div className="mt-4 rounded-xl border border-[#d7e7e4] bg-white px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#62807c]">
+            Total Purchased Amount
+          </p>
+          <p className="mt-1 text-2xl font-black text-[#123a36]">
+            ${totalAmount.toFixed(2)}
+          </p>
+
+          <button
+            type="button"
+            onClick={handleClearPurchased}
+            className="mt-3 inline-flex items-center justify-center rounded-lg border border-[#efb6b6] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.08em] text-[#b94747] transition hover:bg-[#fff3f3]"
+          >
+            Empty Purchased
+          </button>
+
+          {buyFeedback ? (
+            <p className="mt-2 text-sm font-semibold text-[#0f6e62]">
+              {buyFeedback}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {filteredItems.length > 0 ? (
@@ -153,7 +268,24 @@ const ProductsComponent = ({ products }) => {
                     </Link>
 
                     <button
+                      type="button"
+                      onClick={() => handleBuy(p.id)}
+                      className="inline-flex flex-1 items-center justify-center rounded-xl bg-linear-to-r from-[#123a36] to-[#0f6e62] px-0 text-sm font-bold uppercase tracking-[0.06em] text-white transition hover:brightness-110"
+                    >
+                      Buy
+                    </button>
+
+                    <Link
+                      href={`/products/edit/${p.id}`}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#bfd9d3] text-[#123a36] transition hover:bg-[#eff9f7]"
+                      title="Edit Product"
+                    >
+                      E
+                    </Link>
+
+                    <button
                       onClick={() => handleDelete(p.id)}
+                      type="button"
                       className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#efb6b6] text-[#b94747] transition hover:bg-[#fff3f3]"
                       title="Delete Product"
                     >
@@ -166,10 +298,22 @@ const ProductsComponent = ({ products }) => {
           })}
         </div>
       ) : (
-        <div className="wish-panel text-center">
-          <h3 className="text-xl font-bold text-[#51706c]">
-            No products found...
-          </h3>
+        <div className="wish-panel flex flex-col items-center gap-4 text-center">
+          <div>
+            <h3 className="text-xl font-bold text-[#51706c]">
+              No products found...
+            </h3>
+            <p className="mt-2 text-sm text-[#6a7f7c]">
+              Try a different filter or add the first item to this collection.
+            </p>
+          </div>
+
+          <Link
+            href="/products/addform"
+            className="mt-2 inline-flex items-center justify-center rounded-xl bg-linear-to-r from-[#0f6e62] to-[#179b89] px-4 py-2 text-sm font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition hover:brightness-110"
+          >
+            Add New Product
+          </Link>
         </div>
       )}
     </section>

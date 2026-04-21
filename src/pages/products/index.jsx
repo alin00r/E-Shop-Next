@@ -1,7 +1,7 @@
 import React from 'react';
-import fs from 'fs/promises';
-import path from 'path';
 import ProductsComponent from '../components/productsComponent';
+import dbConnect from '../../lib/mongodb';
+import Product from '../../models/Product';
 
 const Products = ({ productsData }) => {
   return (
@@ -17,10 +17,17 @@ export async function getStaticProps() {
   let data = [];
 
   try {
-    const dbPath = path.join(process.cwd(), 'db.json');
-    const file = await fs.readFile(dbPath, 'utf8');
-    const parsed = JSON.parse(file);
-    data = Array.isArray(parsed?.products) ? parsed.products : [];
+    await dbConnect();
+    const products = await Product.find({}).sort({ createdAt: -1 }).lean();
+    data = products.map((item) => ({
+      id: item._id.toString(),
+      title: item.title,
+      price: item.price,
+      category: item.category,
+      description: item.description,
+      thumbnail: item.thumbnail,
+      stock: item.stock,
+    }));
   } catch {
     data = [];
   }
@@ -29,6 +36,6 @@ export async function getStaticProps() {
     props: {
       productsData: data,
     },
-    revalidate: 60,
+    revalidate: 300,
   };
 }

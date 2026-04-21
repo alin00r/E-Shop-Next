@@ -15,6 +15,8 @@ const AddProduct = () => {
   });
   const [imageError, setImageError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const processImageFile = (file) => {
     if (!file) {
@@ -68,25 +70,30 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError('');
+    setIsSubmitting(true);
 
     try {
-      const res = await fetch('http://localhost:4000/products', {
+      const res = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           price: Number(formData.price),
-          id: Date.now().toString(),
           thumbnail: formData.thumbnail || DEFAULT_THUMBNAIL,
         }),
       });
 
       if (res.ok) {
         alert('Product Added Successfully!');
-        router.push('/products');
+        await router.push('/products');
+      } else {
+        setSubmitError('Could not save product. Please check your inputs.');
       }
-    } catch (error) {
-      console.error('Add failed:', error);
+    } catch {
+      setSubmitError('Could not save product right now.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -225,8 +232,11 @@ const AddProduct = () => {
             </div>
           </div>
           <button type="submit" className="wish-btn w-full py-3 text-base">
-            Save Product
+            {isSubmitting ? 'Saving...' : 'Save Product'}
           </button>
+          {submitError ? (
+            <p className="text-sm font-semibold text-red-600">{submitError}</p>
+          ) : null}
         </form>
       </div>
     </section>

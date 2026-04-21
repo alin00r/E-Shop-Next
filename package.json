@@ -5,12 +5,11 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
-    "start": "next start && json-server --watch db.json --port 4000",
-    "api": "json-server --watch db.json --port 4000",
+    "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
-    "json-server": "^1.0.0-beta.15",
+    "mongoose": "^9.5.0",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"

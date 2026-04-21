@@ -1,15 +1,43 @@
-import React from 'react';
-import fs from 'fs/promises';
-import path from 'path';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import dbConnect from '../../lib/mongodb';
+import Product from '../../models/Product';
 
 const DEFAULT_THUMBNAIL =
   'https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp';
 
 const ProductDetailsPage = ({ product }) => {
+  const [purchaseMessage, setPurchaseMessage] = useState('');
+  const [isBuying, setIsBuying] = useState(false);
   const imageSrc = product?.thumbnail || DEFAULT_THUMBNAIL;
   const isInlineImage = imageSrc.startsWith('data:');
+
+  const handleBuy = async () => {
+    setIsBuying(true);
+    setPurchaseMessage('');
+
+    try {
+      const res = await fetch(`/api/products/${product.id}/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: 1 }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Buy request failed.');
+      }
+
+      const data = await res.json();
+      setPurchaseMessage(
+        `Purchased. Running total: $${Number(data.totalAmount || 0).toFixed(2)}`,
+      );
+    } catch {
+      setPurchaseMessage('Could not complete purchase. Please try again.');
+    } finally {
+      setIsBuying(false);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-5xl">
@@ -45,11 +73,27 @@ const ProductDetailsPage = ({ product }) => {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleBuy}
+                disabled={isBuying}
+                className="inline-flex items-center justify-center rounded-xl bg-linear-to-r from-[#123a36] to-[#0f6e62] px-5 py-2.5 text-sm font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isBuying ? 'Processing...' : 'Buy Product'}
+              </button>
+
               <Link
                 href="/products"
                 className="inline-flex items-center justify-center rounded-xl border border-[#bfd9d3] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.06em] text-[#0f6e62] transition hover:border-[#0f6e62] hover:bg-[#eff9f7]"
               >
                 Back to products
+              </Link>
+
+              <Link
+                href={`/products/edit/${product.id}`}
+                className="inline-flex items-center justify-center rounded-xl border border-[#123a36]/30 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.06em] text-[#123a36] transition hover:border-[#123a36] hover:bg-[#f4fbfa]"
+              >
+                Edit Product
               </Link>
 
               <Link
@@ -59,6 +103,12 @@ const ProductDetailsPage = ({ product }) => {
                 Add another
               </Link>
             </div>
+
+            {purchaseMessage ? (
+              <p className="mt-4 rounded-xl bg-[#e8f7f3] px-4 py-2 text-sm font-bold text-[#0f6e62]">
+                {purchaseMessage}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -69,38 +119,57 @@ const ProductDetailsPage = ({ product }) => {
 export default ProductDetailsPage;
 
 export async function getStaticPaths() {
-  return {
-    paths: [],
-    fallback: 'blocking',
-  };
+  try {
+    await dbConnect();
+    const products = await Product.find({}, '_id').limit(20).lean();
+
+    return {
+      paths: products.map((item) => ({
+        params: { id: item._id.toString() },
+      })),
+      fallback: 'blocking',
+    };
+  } catch {
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {
-  let product = null;
-
   try {
-    const dbPath = path.join(process.cwd(), 'db.json');
-    const file = await fs.readFile(dbPath, 'utf8');
-    const parsed = JSON.parse(file);
-    const products = Array.isArray(parsed?.products) ? parsed.products : [];
+    await dbConnect();
+    const found = await Product.findById(params?.id).lean();
+    const product = found
+      ? {
+          id: found._id.toString(),
+          title: found.title,
+          price: found.price,
+          category: found.category,
+          description: found.description,
+          thumbnail: found.thumbnail,
+          stock: found.stock,
+        }
+      : null;
 
-    product =
-      products.find((item) => String(item.id) === String(params?.id)) || null;
+    if (!product) {
+      return {
+        notFound: true,
+        revalidate: 15,
+      };
+    }
+
+    return {
+      props: {
+        product,
+      },
+      revalidate: 300,
+    };
   } catch {
-    product = null;
-  }
-
-  if (!product) {
     return {
       notFound: true,
-      revalidate: 10,
+      revalidate: 300,
     };
   }
-
-  return {
-    props: {
-      product,
-    },
-    revalidate: 10,
-  };
 }

@@ -6,6 +6,7 @@ const NavBar = () => {
   const mainLinks = [
     { href: '/', label: 'Home' },
     { href: '/products', label: 'Products' },
+    { href: '/news', label: 'News' },
     { href: '/contactus', label: 'Contact Us' },
   ];
 
@@ -50,6 +51,12 @@ const NavBar = () => {
               className="rounded-full bg-white/12 px-3 py-2 font-bold leading-tight transition hover:bg-white/20"
             >
               Browse
+            </Link>
+            <Link
+              href="/news"
+              className="rounded-full bg-white/12 px-3 py-2 font-bold leading-tight transition hover:bg-white/20"
+            >
+              News
             </Link>
             <Link
               href="/contactus"
