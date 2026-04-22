@@ -1,5 +1,7 @@
 import dbConnect from '../../../lib/mongodb';
 import Product from '../../../models/Product';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../../lib/auth';
 
 function mapProduct(product) {
   return {
@@ -17,13 +19,24 @@ function mapProduct(product) {
 
 export default async function handler(req, res) {
   await dbConnect();
+  const session = await getServerSession(req, res, authOptions);
 
   if (req.method === 'GET') {
-    const products = await Product.find({}).sort({ createdAt: -1 });
+    let query = Product.find({}).sort({ createdAt: -1 });
+
+    if (!session) {
+      query = query.limit(4);
+    }
+
+    const products = await query;
     return res.status(200).json(products.map(mapProduct));
   }
 
   if (req.method === 'POST') {
+    if (!session) {
+      return res.status(401).json({ message: 'Sign in to create products.' });
+    }
+
     try {
       const payload = {
         title: req.body?.title,

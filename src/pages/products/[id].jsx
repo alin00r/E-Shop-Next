@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getServerSession } from 'next-auth/next';
 import dbConnect from '../../lib/mongodb';
 import Product from '../../models/Product';
+import { authOptions } from '../../lib/auth';
 
 const DEFAULT_THUMBNAIL =
   'https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp';
 
-const ProductDetailsPage = ({ product }) => {
+const ProductDetailsPage = ({ product, isAuthenticated }) => {
   const [purchaseMessage, setPurchaseMessage] = useState('');
   const [isBuying, setIsBuying] = useState(false);
   const imageSrc = product?.thumbnail || DEFAULT_THUMBNAIL;
   const isInlineImage = imageSrc.startsWith('data:');
+  const canManageProducts = Boolean(isAuthenticated);
 
   const handleBuy = async () => {
     setIsBuying(true);
@@ -91,14 +94,22 @@ const ProductDetailsPage = ({ product }) => {
 
               <Link
                 href={`/products/edit/${product.id}`}
-                className="inline-flex items-center justify-center rounded-xl border border-[#123a36]/30 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.06em] text-[#123a36] transition hover:border-[#123a36] hover:bg-[#f4fbfa]"
+                className={`inline-flex items-center justify-center rounded-xl border px-5 py-2.5 text-sm font-bold uppercase tracking-[0.06em] transition ${
+                  canManageProducts
+                    ? 'border-[#123a36]/30 text-[#123a36] hover:border-[#123a36] hover:bg-[#f4fbfa]'
+                    : 'pointer-events-none cursor-not-allowed border-[#d9e6e4] text-[#8ba09c]'
+                }`}
               >
                 Edit Product
               </Link>
 
               <Link
                 href="/products/addform"
-                className="inline-flex items-center justify-center rounded-xl bg-linear-to-r from-[#0f6e62] to-[#179b89] px-5 py-2.5 text-sm font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition hover:brightness-110"
+                className={`inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-extrabold uppercase tracking-[0.08em] shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition ${
+                  canManageProducts
+                    ? 'bg-linear-to-r from-[#0f6e62] to-[#179b89] text-white hover:brightness-110'
+                    : 'pointer-events-none cursor-not-allowed bg-[#d9e6e4] text-[#7b8f8c] shadow-none'
+                }`}
               >
                 Add another
               </Link>
@@ -118,29 +129,16 @@ const ProductDetailsPage = ({ product }) => {
 
 export default ProductDetailsPage;
 
-export async function getStaticPaths() {
+export async function getServerSideProps(context) {
   try {
-    await dbConnect();
-    const products = await Product.find({}, '_id').limit(20).lean();
+    const session = await getServerSession(
+      context.req,
+      context.res,
+      authOptions,
+    );
 
-    return {
-      paths: products.map((item) => ({
-        params: { id: item._id.toString() },
-      })),
-      fallback: 'blocking',
-    };
-  } catch {
-    return {
-      paths: [],
-      fallback: 'blocking',
-    };
-  }
-}
-
-export async function getStaticProps({ params }) {
-  try {
     await dbConnect();
-    const found = await Product.findById(params?.id).lean();
+    const found = await Product.findById(context.params?.id).lean();
     const product = found
       ? {
           id: found._id.toString(),
@@ -163,13 +161,13 @@ export async function getStaticProps({ params }) {
     return {
       props: {
         product,
+        isAuthenticated: Boolean(session),
+        session,
       },
-      revalidate: 300,
     };
   } catch {
     return {
       notFound: true,
-      revalidate: 300,
     };
   }
 }

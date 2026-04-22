@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
 const NavBar = () => {
+  const { data: session } = useSession();
   const quickLinks = ['Fresh Picks', 'New Arrivals', 'Best Sellers', 'Support'];
 
   const mainLinks = [
@@ -46,6 +48,28 @@ const NavBar = () => {
           </div>
 
           <div className="ml-auto flex items-center gap-2 text-xs sm:gap-3 sm:text-sm">
+            {session?.user ? (
+              <div className="hidden items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-white lg:flex">
+                <span className="font-bold">
+                  {session.user.name || session.user.email}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="rounded-full bg-[#f7d78c] px-3 py-1 font-black uppercase tracking-[0.08em] text-[#0f3d3a] transition hover:bg-[#ffe3a8]"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => signIn(undefined, { callbackUrl: '/products' })}
+                className="rounded-full bg-[#f7d78c] px-3 py-2 font-black uppercase tracking-[0.08em] text-[#0f3d3a] transition hover:bg-[#ffe3a8]"
+              >
+                Sign in
+              </button>
+            )}
             <Link
               href="/products"
               className="rounded-full bg-white/12 px-3 py-2 font-bold leading-tight transition hover:bg-white/20"

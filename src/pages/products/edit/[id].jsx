@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { getServerSession } from 'next-auth/next';
 import dbConnect from '../../../lib/mongodb';
 import Product from '../../../models/Product';
+import { authOptions } from '../../../lib/auth';
 
 const DEFAULT_THUMBNAIL =
   'https://thumbs.dreamstime.com/b/new-product-coming-soon-icon-shadow-simple-vector-logo-new-product-coming-soon-icon-shadow-416064962.jpg';
@@ -159,9 +161,20 @@ export default function EditProductPage({ product }) {
   );
 }
 
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps(context) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: `/login?callbackUrl=/products/edit/${context.params.id}`,
+        permanent: false,
+      },
+    };
+  }
+
   await dbConnect();
-  const found = await Product.findById(params.id).lean();
+  const found = await Product.findById(context.params.id).lean();
 
   if (!found) {
     return {
@@ -180,6 +193,7 @@ export async function getServerSideProps({ params }) {
         thumbnail: found.thumbnail,
         stock: found.stock,
       },
+      session,
     },
   };
 }

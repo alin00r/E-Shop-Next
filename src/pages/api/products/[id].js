@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dbConnect from '../../../lib/mongodb';
 import Product from '../../../models/Product';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../../lib/auth';
 
 function mapProduct(product) {
   return {
@@ -18,6 +20,7 @@ function mapProduct(product) {
 
 export default async function handler(req, res) {
   await dbConnect();
+  const session = await getServerSession(req, res, authOptions);
 
   const { id } = req.query;
 
@@ -36,6 +39,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PUT') {
+    if (!session) {
+      return res.status(401).json({ message: 'Sign in to update products.' });
+    }
+
     try {
       const update = {
         title: req.body?.title,
@@ -64,6 +71,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
+    if (!session) {
+      return res.status(401).json({ message: 'Sign in to delete products.' });
+    }
+
     const deleted = await Product.findByIdAndDelete(id);
 
     if (!deleted) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 const getRandomIndex = (length, excludeIndex = -1) => {
   if (length <= 1) {
@@ -15,10 +16,16 @@ const getRandomIndex = (length, excludeIndex = -1) => {
 };
 
 const NewsToast = () => {
+  const { data: session, status } = useSession();
   const [articles, setArticles] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    if (!session) {
+      setArticles([]);
+      return;
+    }
+
     let isMounted = true;
 
     const fetchNews = async () => {
@@ -48,7 +55,7 @@ const NewsToast = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     if (articles.length <= 1) {
@@ -62,7 +69,7 @@ const NewsToast = () => {
     return () => clearInterval(rotateToast);
   }, [articles]);
 
-  if (!articles.length) {
+  if (status !== 'authenticated' || !articles.length) {
     return null;
   }
 

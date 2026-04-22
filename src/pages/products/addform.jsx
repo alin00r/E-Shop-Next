@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../lib/auth';
 
 const DEFAULT_THUMBNAIL =
   'https://thumbs.dreamstime.com/b/new-product-coming-soon-icon-shadow-simple-vector-logo-new-product-coming-soon-icon-shadow-416064962.jpg';
@@ -244,3 +246,22 @@ const AddProduct = () => {
 };
 
 export default AddProduct;
+
+export async function getServerSideProps(context) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/login?callbackUrl=/products/addform',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {
+      session,
+    },
+  };
+}

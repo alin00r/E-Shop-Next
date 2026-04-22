@@ -5,12 +5,13 @@ import Link from 'next/link';
 const DEFAULT_THUMBNAIL =
   'https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp';
 
-const ProductsComponent = ({ products }) => {
+const ProductsComponent = ({ products, isAuthenticated = false }) => {
   const [items, setItems] = useState(products || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [totalAmount, setTotalAmount] = useState(0);
   const [buyFeedback, setBuyFeedback] = useState('');
+  const canManageProducts = Boolean(isAuthenticated);
 
   const fetchProducts = async () => {
     try {
@@ -62,6 +63,10 @@ const ProductsComponent = ({ products }) => {
   }, []);
 
   const handleDelete = async (id) => {
+    if (!canManageProducts) {
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         const res = await fetch(`/api/products/${id}`, {
@@ -104,6 +109,10 @@ const ProductsComponent = ({ products }) => {
   };
 
   const handleClearPurchased = async () => {
+    if (!canManageProducts) {
+      return;
+    }
+
     if (!window.confirm('Empty all purchased records?')) {
       return;
     }
@@ -143,6 +152,10 @@ const ProductsComponent = ({ products }) => {
     return title.includes(searchQuery.toLowerCase());
   });
 
+  const displayedItems = canManageProducts
+    ? filteredItems
+    : filteredItems.slice(0, 4);
+
   const categories = ['all', 'beauty', 'fragrances', 'furniture', 'groceries'];
 
   return (
@@ -172,7 +185,11 @@ const ProductsComponent = ({ products }) => {
 
             <Link
               href="/products/addform"
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-linear-to-r from-[#0f6e62] to-[#179b89] px-4 text-sm font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition hover:brightness-110"
+              className={`inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-extrabold uppercase tracking-[0.08em] shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition ${
+                canManageProducts
+                  ? 'bg-linear-to-r from-[#0f6e62] to-[#179b89] text-white hover:brightness-110'
+                  : 'pointer-events-none cursor-not-allowed bg-[#d9e6e4] text-[#7b8f8c] shadow-none'
+              }`}
             >
               Add New
             </Link>
@@ -220,9 +237,9 @@ const ProductsComponent = ({ products }) => {
         </div>
       </div>
 
-      {filteredItems.length > 0 ? (
+      {displayedItems.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {filteredItems.map((p, index) => {
+          {displayedItems.map((p, index) => {
             const imageSrc = p.thumbnail || DEFAULT_THUMBNAIL;
             const isInlineImage = imageSrc.startsWith('data:');
 
@@ -275,19 +292,34 @@ const ProductsComponent = ({ products }) => {
                       Buy
                     </button>
 
-                    <Link
-                      href={`/products/edit/${p.id}`}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#bfd9d3] text-[#123a36] transition hover:bg-[#eff9f7]"
-                      title="Edit Product"
-                    >
-                      E
-                    </Link>
+                    {canManageProducts ? (
+                      <Link
+                        href={`/products/edit/${p.id}`}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#bfd9d3] text-[#123a36] transition hover:bg-[#eff9f7]"
+                        title="Edit Product"
+                      >
+                        E
+                      </Link>
+                    ) : (
+                      <span
+                        className="inline-flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-xl border border-dashed border-[#d9e6e4] text-[#8ba09c]"
+                        title="Sign in to edit product"
+                        aria-disabled="true"
+                      >
+                        E
+                      </span>
+                    )}
 
                     <button
                       onClick={() => handleDelete(p.id)}
                       type="button"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#efb6b6] text-[#b94747] transition hover:bg-[#fff3f3]"
-                      title="Delete Product"
+                      disabled={!canManageProducts}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#efb6b6] text-[#b94747] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:border-[#e2e8e7] disabled:text-[#8ba09c] disabled:hover:bg-transparent"
+                      title={
+                        canManageProducts
+                          ? 'Delete Product'
+                          : 'Sign in to delete product'
+                      }
                     >
                       X
                     </button>
@@ -310,7 +342,11 @@ const ProductsComponent = ({ products }) => {
 
           <Link
             href="/products/addform"
-            className="mt-2 inline-flex items-center justify-center rounded-xl bg-linear-to-r from-[#0f6e62] to-[#179b89] px-4 py-2 text-sm font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition hover:brightness-110"
+            className={`mt-2 inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-extrabold uppercase tracking-[0.08em] shadow-[0_14px_24px_-16px_rgba(15,110,98,0.85)] transition ${
+              canManageProducts
+                ? 'bg-linear-to-r from-[#0f6e62] to-[#179b89] text-white hover:brightness-110'
+                : 'pointer-events-none cursor-not-allowed bg-[#d9e6e4] text-[#7b8f8c] shadow-none'
+            }`}
           >
             Add New Product
           </Link>

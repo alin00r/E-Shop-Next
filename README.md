@@ -20,6 +20,17 @@ Set your connection string:
 MONGODB_URI=mongodb://127.0.0.1:27017/noor_stor
 ```
 
+For authentication, add these values to `.env.local` as well:
+
+```bash
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace-with-a-long-random-secret
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GITHUB_ID=...
+GITHUB_SECRET=...
+```
+
 For local development, put the same value in `.env.local` at the project root.
 
 ## Run in development
@@ -40,6 +51,7 @@ npm run dev
 ## Implemented Features
 
 - Full product CRUD through Node.js API routes with Mongoose.
+- Google and GitHub sign-in with session-aware product management.
 - Full news CRUD through Node.js API routes with Mongoose.
 - Buy product endpoint plus running total purchased amount.
 - ISR for products list and product details with a 5 minute refresh window.
