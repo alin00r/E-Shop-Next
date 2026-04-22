@@ -1,3 +1,5 @@
+'use client';
+
 const Footer = () => {
   return (
     <footer className="mt-10 text-[#f3f4f6]">

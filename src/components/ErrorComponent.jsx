@@ -1,5 +1,6 @@
-import { useRouter } from 'next/router';
-import React from 'react';
+'use client';
+
+import { useRouter } from 'next/navigation';
 
 const ErrorComponent = () => {
   const router = useRouter();

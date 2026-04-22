@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const DEFAULT_THUMBNAIL =
   'https://thumbs.dreamstime.com/b/new-product-coming-soon-icon-shadow-simple-vector-logo-new-product-coming-soon-icon-shadow-416064962.jpg';

@@ -1,5 +1,3 @@
-import React from 'react';
-
 const ContactUsComponent = () => {
   return (
     <section className="mx-auto max-w-6xl">

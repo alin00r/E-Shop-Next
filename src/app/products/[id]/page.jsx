@@ -1,13 +1,37 @@
-import React from 'react';
 import fs from 'fs/promises';
 import path from 'path';
 import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 const DEFAULT_THUMBNAIL =
   'https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp';
 
-const ProductDetailsPage = ({ product }) => {
+export const revalidate = 10;
+
+export async function generateStaticParams() {
+  return [];
+}
+
+const ProductDetailsPage = async ({ params }) => {
+  let product = null;
+
+  try {
+    const dbPath = path.join(process.cwd(), 'db.json');
+    const file = await fs.readFile(dbPath, 'utf8');
+    const parsed = JSON.parse(file);
+    const products = Array.isArray(parsed?.products) ? parsed.products : [];
+
+    product =
+      products.find((item) => String(item.id) === String(params?.id)) || null;
+  } catch {
+    product = null;
+  }
+
+  if (!product) {
+    notFound();
+  }
+
   const imageSrc = product?.thumbnail || DEFAULT_THUMBNAIL;
   const isInlineImage = imageSrc.startsWith('data:');
 
@@ -67,40 +91,3 @@ const ProductDetailsPage = ({ product }) => {
 };
 
 export default ProductDetailsPage;
-
-export async function getStaticPaths() {
-  return {
-    paths: [],
-    fallback: 'blocking',
-  };
-}
-
-export async function getStaticProps({ params }) {
-  let product = null;
-
-  try {
-    const dbPath = path.join(process.cwd(), 'db.json');
-    const file = await fs.readFile(dbPath, 'utf8');
-    const parsed = JSON.parse(file);
-    const products = Array.isArray(parsed?.products) ? parsed.products : [];
-
-    product =
-      products.find((item) => String(item.id) === String(params?.id)) || null;
-  } catch {
-    product = null;
-  }
-
-  if (!product) {
-    return {
-      notFound: true,
-      revalidate: 10,
-    };
-  }
-
-  return {
-    props: {
-      product,
-    },
-    revalidate: 10,
-  };
-}
