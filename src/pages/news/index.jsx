@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import dbConnect from '../../lib/mongodb';
 import News from '../../models/News';
 
 const NewsPage = ({ newsData }) => {
+  const { status } = useSession();
+  const canAddNews = status === 'authenticated';
   const [items, setItems] = useState(newsData || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
@@ -101,12 +104,22 @@ const NewsPage = ({ newsData }) => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
 
-          <Link
-            href="/news/addform"
-            className="inline-flex h-11 items-center justify-center rounded-xl bg-[#123a52] px-4 text-sm font-extrabold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-          >
-            Add News
-          </Link>
+          {canAddNews ? (
+            <Link
+              href="/news/addform"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-[#123a52] px-4 text-sm font-extrabold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+            >
+              Add News
+            </Link>
+          ) : (
+            <span
+              className="inline-flex h-11 cursor-not-allowed items-center justify-center rounded-xl bg-[#b8c9d3] px-4 text-sm font-extrabold uppercase tracking-[0.08em] text-white"
+              title="Sign in to add news"
+              aria-disabled="true"
+            >
+              Add News
+            </span>
+          )}
         </div>
 
         {statusMessage ? (
@@ -180,12 +193,22 @@ const NewsPage = ({ newsData }) => {
             </p>
           </div>
 
-          <Link
-            href="/news/addform"
-            className="inline-flex items-center justify-center rounded-xl bg-[#123a52] px-4 py-2 text-sm font-extrabold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-          >
-            Add News Post
-          </Link>
+          {canAddNews ? (
+            <Link
+              href="/news/addform"
+              className="inline-flex items-center justify-center rounded-xl bg-[#123a52] px-4 py-2 text-sm font-extrabold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+            >
+              Add News Post
+            </Link>
+          ) : (
+            <span
+              className="inline-flex cursor-not-allowed items-center justify-center rounded-xl bg-[#b8c9d3] px-4 py-2 text-sm font-extrabold uppercase tracking-[0.08em] text-white"
+              title="Sign in to add news"
+              aria-disabled="true"
+            >
+              Add News Post
+            </span>
+          )}
         </div>
       )}
     </section>

@@ -24,6 +24,16 @@ const nextConfig: NextConfig = {
         hostname: 'f.nooncdn.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'eshop.vodafone.com.eg',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'eshop.vodafone.com.eg',
+        pathname: '/**',
+      },
     ],
   },
 };
