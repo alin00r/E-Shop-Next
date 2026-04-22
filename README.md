@@ -1,6 +1,6 @@
-# Noor Stor (Next.js + Mongoose)
+# Noor Stor (Next.js + Mongoose + NextAuth)
 
-Simple e-commerce demo built with Next.js (Pages Router), Node.js API routes, and Mongoose.
+Simple e-commerce demo built with Next.js (Pages Router), Node.js API routes, Mongoose, and NextAuth (Google + GitHub providers).
 
 ## Requirements
 
@@ -31,7 +31,7 @@ GITHUB_ID=...
 GITHUB_SECRET=...
 ```
 
-For local development, put the same value in `.env.local` at the project root.
+For local development, put all values in `.env.local` at the project root.
 
 ## Run in development
 
@@ -42,20 +42,30 @@ npm run dev
 ## URLs
 
 - App: http://localhost:3000
+- Login: http://localhost:3000/login
+- NextAuth API: http://localhost:3000/api/auth/signin
 - API (list/create): http://localhost:3000/api/products
 - API (buy): http://localhost:3000/api/products/:id/buy
 - API (totals): http://localhost:3000/api/purchases/total
 - API news list/create: http://localhost:3000/api/news
 - API news item: http://localhost:3000/api/news/:id
 
+## Authentication and Access Rules
+
+- Guests (no session) can browse products, but only the first 4 products are returned.
+- Guests cannot create, edit, or delete products.
+- Guests cannot clear purchased totals.
+- News toast is only visible for authenticated users.
+- Signed-in users can access full product management (add, edit, delete) and purchase cleanup actions.
+
 ## Implemented Features
 
-- Full product CRUD through Node.js API routes with Mongoose.
-- Google and GitHub sign-in with session-aware product management.
-- Full news CRUD through Node.js API routes with Mongoose.
+- Product CRUD through Node.js API routes with Mongoose and session-based authorization.
+- Google and GitHub sign-in using NextAuth with a custom login page.
+- Session-aware product pages (guest-limited list vs full signed-in access).
 - Buy product endpoint plus running total purchased amount.
-- ISR for products list and product details with a 5 minute refresh window.
-- DB-backed news page with add/edit/delete actions.
+- Purchased totals clear action restricted to authenticated users.
+- News CRUD through API routes, with DB-backed news pages and authenticated-only toast display.
 
 ## Build
 
